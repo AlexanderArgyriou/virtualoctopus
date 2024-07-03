@@ -28,6 +28,14 @@ public final class BeanBucket {
                 .collect(Collectors.toList());
     }
 
+    public Object getBeanOfType(Class<?> type) {
+        return beans.stream()
+                .filter(bean -> type.isAssignableFrom(bean.getClass()))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("missing bean of type "
+                        + type.getName()));
+    }
+
     public void loadBeans() {
         this.controllers =
                 ControllerBeanLoader.newLoader().loadBeans();

@@ -1,5 +1,6 @@
 package com.virtualoctopus.server;
 
+import com.virtualoctopus.context.BeanBucket;
 import com.virtualoctopus.utils.pathmappers.PathHandlerEnhancer;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
@@ -12,20 +13,24 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
-public class ReactopusServer {
+public class VirtualOctopusServer {
     private final HttpServer server;
     private final PathHandlerEnhancer pathHandlerEnhancer
             = new PathHandlerEnhancer();
+    private final BeanBucket beanBucket;
 
     @SneakyThrows
-    public ReactopusServer(
+    public VirtualOctopusServer(
             final int port,
-            final String initPath) {
+            final String initPath,
+            final BeanBucket beanBucket) {
         this.server = HttpServer.create(
                 new InetSocketAddress(port), 0
         );
+        this.beanBucket = beanBucket;
+
         server.createContext(initPath, BasePathHandler.getNew());
-        pathHandlerEnhancer.loadServerPaths(server);
+        pathHandlerEnhancer.loadServerPaths(this.server, this.beanBucket);
     }
 
     public void start() {
