@@ -1,19 +1,17 @@
 package com.virtualoctopus.utils.beanloader;
 
 import com.virtualoctopus.annotations.bean.definitions.VirtualOctopusController;
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
-import org.reflections.util.ConfigurationBuilder;
 
-import java.util.Set;
+import java.util.List;
 
-public class ControllerBeanLoader {
-    private static final String ALL = "";
+public final class ControllerBeanLoader
+        implements BeanLoader {
+    public static BeanLoader newLoader() {
+        return new ControllerBeanLoader();
+    }
 
-    public Set<Class<?>> loadControllers() {
-        var reflections = new Reflections(new ConfigurationBuilder()
-                .forPackages(ALL)
-                .setScanners(Scanners.TypesAnnotated));
-        return reflections.getTypesAnnotatedWith(VirtualOctopusController.class);
+    @Override
+    public List<Object> loadBeans() {
+        return BeanLoaderUtils.loadBeansOfType(VirtualOctopusController.class);
     }
 }

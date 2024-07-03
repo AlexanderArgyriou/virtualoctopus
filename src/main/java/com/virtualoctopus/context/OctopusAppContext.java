@@ -1,13 +1,10 @@
 package com.virtualoctopus.context;
 
-public class OctopusAppContext {
+import com.virtualoctopus.annotations.bean.definitions.VirtualOctopusComponent;
+import lombok.Data;
 
-    private static final OctopusAppContext octopusAppContext
-            = new OctopusAppContext();
-
-    private OctopusAppContext() {}
-
-    public static OctopusAppContext getInstance() {
-        return octopusAppContext;
-    }
+@VirtualOctopusComponent
+@Data
+public final class OctopusAppContext {
+    private final BeanBucket beanBucket = new BeanBucket();
 }
