@@ -1,20 +1,26 @@
 package com.virtualoctopus.utils.pathmappers;
 
-import com.virtualoctopus.annotations.resource.mappings.ReactopusGetMapping;
-import com.virtualoctopus.utils.beanloader.ControllerBeanLoader;
 import com.sun.net.httpserver.HttpServer;
+import com.virtualoctopus.annotations.resource.mappings.ReactopusGetMapping;
+import com.virtualoctopus.context.BeanBucket;
+import com.virtualoctopus.utils.beanloader.ControllerBeanLoader;
 
 import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class PathHandlerEnhancer {
     private final ControllerBeanLoader controllerBeanLoader =
             new ControllerBeanLoader();
 
     public void loadServerPaths(final HttpServer server) {
-        Set<Class<?>> controllers =
-                controllerBeanLoader.loadControllers();
+        BeanBucket beanBucket = new BeanBucket();
+        beanBucket.loadBeans();
+        Set<Class<?>> controllers = beanBucket.getControllers()
+                .stream()
+                .map(Object::getClass)
+                .collect(Collectors.toSet());
 
         for (Class<?> clazz : controllers) {
             for (Method method : clazz.getDeclaredMethods()) {
