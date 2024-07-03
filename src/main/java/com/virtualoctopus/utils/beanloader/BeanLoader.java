@@ -5,7 +5,8 @@ import java.util.List;
 public sealed interface BeanLoader
         permits ComponentBeanLoader,
         ControllerBeanLoader,
-        ServiceBeanLoader {
+        ServiceBeanLoader,
+        RepositoryBeanLoader {
     String ALL = "";
 
     default List<Object> loadBeans() {

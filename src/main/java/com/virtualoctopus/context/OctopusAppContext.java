@@ -1,7 +1,5 @@
 package com.virtualoctopus.context;
 
-import com.virtualoctopus.annotations.bean.definitions.VirtualOctopusComponent;
-import com.virtualoctopus.annotations.di.VirtualOctopusInject;
 import com.virtualoctopus.injection.Injector;
 import lombok.Data;
 import lombok.ToString;

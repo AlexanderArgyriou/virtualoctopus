@@ -2,6 +2,7 @@ package com.virtualoctopus.context;
 
 import com.virtualoctopus.utils.beanloader.ComponentBeanLoader;
 import com.virtualoctopus.utils.beanloader.ControllerBeanLoader;
+import com.virtualoctopus.utils.beanloader.RepositoryBeanLoader;
 import com.virtualoctopus.utils.beanloader.ServiceBeanLoader;
 import lombok.Data;
 
@@ -17,6 +18,7 @@ public final class BeanBucket {
     private List<Object> controllers = new ArrayList<>();
     private List<Object> services = new ArrayList<>();
     private List<Object> components = new ArrayList<>();
+    private List<Object> repositories = new ArrayList<>();
 
     public void addBean(Object bean) {
         beans.add(bean);
@@ -43,9 +45,12 @@ public final class BeanBucket {
                 ComponentBeanLoader.newLoader().loadBeans();
         this.services =
                 ServiceBeanLoader.newLoader().loadBeans();
+        this.repositories =
+                RepositoryBeanLoader.newLoader().loadBeans();
 
         beans.addAll(services);
         beans.addAll(controllers);
         beans.addAll(components);
+        beans.addAll(repositories);
     }
 }

@@ -1,6 +1,6 @@
 package com.virtualoctopus.injection;
 
-import com.virtualoctopus.annotations.di.VirtualOctopusInject;
+import com.virtualoctopus.annotations.dinjetion.VirtualOctopusInject;
 import com.virtualoctopus.context.BeanBucket;
 
 import java.lang.annotation.Annotation;
