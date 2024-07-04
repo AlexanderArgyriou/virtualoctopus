@@ -11,6 +11,8 @@ import org.reflections.util.ConfigurationBuilder;
 import java.lang.reflect.Proxy;
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class RepositoryBeanLoader
         implements BeanLoader {
@@ -24,12 +26,12 @@ public final class RepositoryBeanLoader
                 .forPackages(ALL)
                 .setScanners(Scanners.TypesAnnotated));
 
-        VirtualOctopusDbConfiguration dbConfig = configurations.stream()
+        Object dbConfig = configurations.stream()
                 .filter(c -> Arrays.stream(c.getClass().getAnnotations())
                         .anyMatch(VirtualOctopusDbConfiguration.class::isInstance))
                 .findFirst()
-                .orElseThrow(RuntimeException::new)
-                .getClass().getAnnotation(VirtualOctopusDbConfiguration.class);
+                .orElseThrow(RuntimeException::new);
+        Class<?> dbConfigClass = dbConfig.getClass();
 
         var classes =
                 reflections.getTypesAnnotatedWith(VirtualOctopusRepository.class);
@@ -43,8 +45,22 @@ public final class RepositoryBeanLoader
                                 (proxy, method, args) -> {
                                     if (method.isAnnotationPresent(VirtualOctopusQuery.class)) {
                                         String query = method.getAnnotation(VirtualOctopusQuery.class).query();
-                                        var result = getResultList(dbConfig.url(),
-                                                dbConfig.username(), dbConfig.password(), query);
+
+                                        if (query.startsWith("INSERT")) {
+                                            Object toSave = args[0];
+                                            String[] valuesToReplace = extractValues(query);
+                                            for (String s : valuesToReplace) {
+                                                String prop = s.substring(s.lastIndexOf(".") + 1);
+                                                Object value =
+                                                        toSave.getClass().getMethod("get" +
+                                                                prop.substring(0, 1).toUpperCase() + prop.substring(1)).invoke(toSave);
+                                                query = query.replace(s, value != null ? value.toString() : "");
+                                            }
+                                        }
+
+                                        var result = getResultList((String) dbConfigClass.getMethod("getDbUrl").invoke(dbConfig),
+                                                (String) dbConfigClass.getMethod("getDbUser").invoke(dbConfig),
+                                                (String) dbConfigClass.getMethod("getDbPassword").invoke(dbConfig), query);
                                         return convertListToJson(result);
                                     } else {
                                         return method.invoke(c, args);
@@ -101,6 +117,24 @@ public final class RepositoryBeanLoader
         } catch (Exception e) {
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public static String[] extractValues(String sql) {
+        // Regular expression to match the values inside the VALUES clause
+        String regex = "VALUES\\s*\\(([^)]+)\\)";
+        Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(sql);
+
+        if (matcher.find()) {
+            String values = matcher.group(1);
+            String[] result = values.split(",");
+            for (int i = 0; i < result.length; i++) {
+                result[i] = result[i].trim().replaceAll("^'|'$", "");
+            }
+            return result;
+        } else {
+            throw new IllegalArgumentException("No values found in the SQL statement");
         }
     }
 }

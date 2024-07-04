@@ -5,10 +5,9 @@ import com.virtualoctopus.annotations.dbase.VirtualOctopusQuery;
 
 @VirtualOctopusRepository
 public interface TestRepo {
-    String url = "jdbc:postgresql://localhost:5432/brl_catalog_db";
-    String user = "brl_catalog";
-    String password = "demo";
-
-    @VirtualOctopusQuery(query = "select * from databasechangelog")
+    @VirtualOctopusQuery(query = "SELECT * from books")
     Object getAll();
+
+    @VirtualOctopusQuery(query = "INSERT INTO books (title, author) VALUES ('book.title', 'book.author');")
+    Object add(Book book);
 }
