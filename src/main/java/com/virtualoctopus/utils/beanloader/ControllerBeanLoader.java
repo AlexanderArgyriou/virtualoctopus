@@ -1,5 +1,6 @@
 package com.virtualoctopus.utils.beanloader;
 
+import com.virtualoctopus.annotations.bean.definitions.VirtualOctopusComponent;
 import com.virtualoctopus.annotations.bean.definitions.VirtualOctopusController;
 
 import java.util.List;
