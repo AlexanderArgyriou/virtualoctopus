@@ -26,11 +26,7 @@ public final class RepositoryBeanLoader
                 .forPackages(ALL)
                 .setScanners(Scanners.TypesAnnotated));
 
-        Object dbConfig = configurations.stream()
-                .filter(c -> Arrays.stream(c.getClass().getAnnotations())
-                        .anyMatch(VirtualOctopusDbConfiguration.class::isInstance))
-                .findFirst()
-                .orElseThrow(RuntimeException::new);
+        Object dbConfig = locateDbConfig(configurations);
         Class<?> dbConfigClass = dbConfig.getClass();
 
         var classes =
@@ -53,14 +49,18 @@ public final class RepositoryBeanLoader
                                                 String prop = s.substring(s.lastIndexOf(".") + 1);
                                                 Object value =
                                                         toSave.getClass().getMethod("get" +
-                                                                prop.substring(0, 1).toUpperCase() + prop.substring(1)).invoke(toSave);
+                                                                prop.substring(0, 1)
+                                                                        .toUpperCase() + prop.substring(1))
+                                                                .invoke(toSave);
                                                 query = query.replace(s, value != null ? value.toString() : "");
                                             }
                                         }
 
-                                        var result = getResultList((String) dbConfigClass.getMethod("getDbUrl").invoke(dbConfig),
+                                        var result = getResultList((String) dbConfigClass
+                                                        .getMethod("getDbUrl").invoke(dbConfig),
                                                 (String) dbConfigClass.getMethod("getDbUser").invoke(dbConfig),
-                                                (String) dbConfigClass.getMethod("getDbPassword").invoke(dbConfig), query);
+                                                (String) dbConfigClass.getMethod("getDbPassword")
+                                                        .invoke(dbConfig), query);
                                         return convertListToJson(result);
                                     } else {
                                         return method.invoke(c, args);
@@ -72,7 +72,18 @@ public final class RepositoryBeanLoader
                 }).toList();
     }
 
-    private List<Map<String, String>> getResultList(String url, String user, String password, String query) {
+    private Object locateDbConfig(List<Object> configurations) {
+        return configurations.stream()
+                .filter(c -> Arrays.stream(c.getClass().getAnnotations())
+                        .anyMatch(VirtualOctopusDbConfiguration.class::isInstance))
+                .findFirst()
+                .orElseThrow(RuntimeException::new);
+    }
+
+    private List<Map<String, String>> getResultList(String url,
+                                                    String user,
+                                                    String password,
+                                                    String query) {
         List<Map<String, String>> resultList = new ArrayList<>();
 
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
@@ -83,17 +94,13 @@ public final class RepositoryBeanLoader
                     ResultSetMetaData rsmd = rs.getMetaData();
                     int columnCount = rsmd.getColumnCount();
 
-                    // Process rows
                     while (rs.next()) {
-                        // Create a map to store the row values with column names as keys
                         Map<String, String> rowMap = new HashMap<>();
                         for (int i = 1; i <= columnCount; i++) {
                             String columnName = rsmd.getColumnName(i);
                             String columnValue = rs.getString(i);
                             rowMap.put(columnName, columnValue);
                         }
-
-                        // Add the row map to the list
                         resultList.add(rowMap);
                     }
                 }
@@ -112,7 +119,6 @@ public final class RepositoryBeanLoader
     private String convertListToJson(List<Map<String, String>> list) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            // Convert the list to a JSON string
             return objectMapper.writeValueAsString(list);
         } catch (Exception e) {
             e.printStackTrace();
@@ -121,7 +127,6 @@ public final class RepositoryBeanLoader
     }
 
     public static String[] extractValues(String sql) {
-        // Regular expression to match the values inside the VALUES clause
         String regex = "VALUES\\s*\\(([^)]+)\\)";
         Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(sql);
